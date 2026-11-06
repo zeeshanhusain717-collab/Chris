@@ -40,22 +40,43 @@ jobs:
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/cpp
 
-      - name: 5. Download & Auto-Patch External AI Brain (Zero Touch to AI-Brain Repo)
+      - name: 5. Download AI Brain & Run Enterprise Python Patcher
         run: |
           echo "=================================================="
-          echo "🌐 Downloading AI Brain & Applying Auto-Patch..."
+          echo "🌐 Downloading AI Brain & Running Python Patcher..."
           echo "=================================================="
           
           # स्वतंत्र AI-Brain रिपॉजिटरी से Raw लिंक डाउनलोड
           AI_BRAIN_URL="https://raw.githubusercontent.com/zeeshanhusain717-collab/AI-Brain/main/brain.cpp"
           curl -sL -o app/src/main/cpp/brain.cpp "$AI_BRAIN_URL"
           
-          # यहाँ ऑटो-पैचिंग हो रही है ताकि AI-Brain को बिना छेड़े कंपाइलर की एरर हमेशा के लिए खत्म हो जाए
-          echo "🔧 Applying NDK compatibility patch dynamically..."
-          sed -i 's/std::advance(it1, dist1(rng));/std::advance(it1, static_cast<long>(dist1(rng)));/g' app/src/main/cpp/brain.cpp
-          sed -i 's/std::advance(it2, dist2(rng));/std::advance(it2, static_cast<long>(dist2(rng)));/g' app/src/main/cpp/brain.cpp
+          # यहाँ पाइथन स्क्रिप्ट के जरिए C++ कंपाइलर की टाइप-मिसमैच समस्या को ऑटोमैटिक ठीक किया जा रहा है (Zero Touch to AI-Brain Repo)
+          python3 - << 'EOF'
+          import re
+
+          filepath = "app/src/main/cpp/brain.cpp"
+          with open(filepath, "r", encoding="utf-8") as f:
+              code = f.read()
+
+          # सुरक्षित तरीके से std::advance को सही सिंटैक्स में पैच करना
+          code = re.sub(
+              r'std::advance\s*\(\s*it1\s*,\s*std::uniform_int_distribution<[^>]+>\s*\(([^)]+)\)\s*\)\s*;',
+              r'std::uniform_int_distribution<std::size_t> dist1(\1);\n        std::advance(it1, static_cast<long>(dist1(rng)));',
+              code
+          )
+
+          code = re.sub(
+              r'std::advance\s*\(\s*it2\s*,\s*std::uniform_int_distribution<[^>]+>\s*\(([^)]+)\)\s*\)\s*;',
+              r'std::uniform_int_distribution<std::size_t> dist2(\1);\n        std::advance(it2, static_cast<long>(dist2(rng)));',
+              code
+          )
+
+          with open(filepath, "w", encoding="utf-8") as f:
+              f.write(code)
+
+          print("✅ Python Patcher successfully executed on brain.cpp!")
+          EOF
           
-          echo "✅ AI Brain successfully downloaded, patched, and ready!"
           ls -lh app/src/main/cpp/brain.cpp
 
       - name: 6. Write gradle.properties
@@ -485,3 +506,4 @@ jobs:
         with:
           name: Zeeshan-AI-Cpp-Powered-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+
