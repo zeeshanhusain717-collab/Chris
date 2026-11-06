@@ -1,0 +1,487 @@
+name: Build Zeeshan AI C++ Powered APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Native C++ Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Java 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 3. Setup Gradle Environment
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.5"
+
+      - name: 4. Create Directory Structure Step-by-Step
+        run: |
+          set -euo pipefail
+          echo "📂 Creating structured directory hierarchy..."
+          mkdir -p app/src/main/java/com/zeeshan/ai
+          mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/assets
+          mkdir -p app/src/main/cpp
+
+      - name: 5. Download AI Brain Remotely from External AI-Brain Cloud Repo
+        run: |
+          echo "=================================================="
+          echo "🌐 Fetching External AI Brain via Cloud URL..."
+          echo "=================================================="
+          
+          # आपकी स्वतंत्र AI-Brain रिपॉजिटरी का डायरेक्ट Raw लिंक
+          AI_BRAIN_URL="https://raw.githubusercontent.com/zeeshanhusain717-collab/AI-Brain/main/brain.cpp"
+          
+          curl -sL -o app/src/main/cpp/brain.cpp "$AI_BRAIN_URL"
+          
+          echo "✅ External AI Brain successfully downloaded and injected!"
+          ls -lh app/src/main/cpp/brain.cpp
+          head -n 5 app/src/main/cpp/brain.cpp
+
+      - name: 6. Write gradle.properties
+        run: |
+          cat > gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          android.nonTransitiveRClass=true
+          org.gradle.daemon=false
+          EOF
+
+      - name: 7. Write settings.gradle
+        run: |
+          cat > settings.gradle <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "ZeeshanAI"
+          include(":app")
+          EOF
+
+      - name: 8. Write Root build.gradle
+        run: |
+          cat > build.gradle <<'EOF'
+          plugins {
+              id "com.android.application" version "8.2.2" apply false
+              id "org.jetbrains.kotlin.android" version "1.9.22" apply false
+          }
+          EOF
+
+      - name: 9. Write App-level build.gradle with NDK/CMake
+        run: |
+          cat > app/build.gradle <<'EOF'
+          plugins {
+              id "com.android.application"
+              id "org.jetbrains.kotlin.android"
+          }
+          android {
+              namespace "com.zeeshan.ai"
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.zeeshan.ai"
+                  minSdk 26
+                  targetSdk 34
+                  versionCode 13
+                  versionName "13.0"
+                  externalNativeBuild {
+                      cmake {
+                          cppFlags "-std=c++17 -O2"
+                      }
+                  }
+              }
+              buildTypes { 
+                  release { minifyEnabled false }
+                  debug { minifyEnabled false }
+              }
+              externalNativeBuild {
+                  cmake {
+                      path file("src/main/cpp/CMakeLists.txt")
+                      version "3.22.1"
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+              kotlinOptions { jvmTarget = "17" }
+          }
+          dependencies {
+              implementation "androidx.core:core-ktx:1.13.1"
+              implementation "androidx.appcompat:appcompat:1.7.0"
+              implementation "com.google.android.material:material:1.12.0"
+          }
+          EOF
+
+      - name: 10. Write Strings Resource File
+        run: |
+          cat > app/src/main/res/values/strings.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Zeeshan AI Ultimate</string>
+          </resources>
+          EOF
+
+      - name: 11. Write Red App Icon Vector Drawable with +2 Text
+        run: |
+          cat > app/src/main/res/drawable/ic_app_icon.xml <<'EOF'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="24"
+              android:viewportHeight="24">
+              <path
+                  android:fillColor="#DC2626"
+                  android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2z"/>
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M4,11h3v-3h2v3h3v2h-3v3H7v-3H4V11z"/>
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M13,8h5v2h-3v1h2c0.55,0 1,0.45 1,1v2c0,0.55 -0.45,1 -1,1h-4v-2h3v-1h-3V8z"/>
+          </vector>
+          EOF
+
+      - name: 12. Write Android Manifest File
+        run: |
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:allowBackup="false"
+                  android:icon="@drawable/ic_app_icon"
+                  android:roundIcon="@drawable/ic_app_icon"
+                  android:label="@string/app_name"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:windowSoftInputMode="adjustResize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+      - name: 13. Write JNI Native Bridge (`native-lib.cpp`)
+        run: |
+          cat > app/src/main/cpp/native-lib.cpp <<'EOF'
+          #include <jni.h>
+          #include <string>
+          #include <random>
+          #include <chrono>
+          #include <memory>
+          #include "brain.cpp"
+
+          static std::unique_ptr<z2ai::Brain> g_brain;
+
+          extern "C" JNIEXPORT jstring JNICALL
+          Java_com_zeeshan_ai_MainActivity_nativeGetAIResponse(JNIEnv* env, jobject /* this */, jstring query_) {
+              const char* queryChars = env->GetStringUTFChars(query_, nullptr);
+              std::string query(queryChars);
+              env->ReleaseStringUTFChars(query_, queryChars);
+
+              if (!g_brain) {
+                  g_brain = std::make_unique<z2ai::Brain>();
+              }
+
+              std::string response = g_brain->process(query);
+              return env->NewStringUTF(response.c_str());
+          }
+          EOF
+
+      - name: 14. Write CMakeLists.txt for NDK Compilation
+        run: |
+          cat > app/src/main/cpp/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.22.1)
+          project("z2ai")
+          add_library(z2ai SHARED native-lib.cpp)
+          find_library(log-lib log)
+          target_link_libraries(z2ai ${log-lib})
+          EOF
+
+      - name: 15. Write 3D-Style Cyberpunk MainActivity.kt with Native C++ Bridge
+        run: |
+          cat > app/src/main/java/com/zeeshan/ai/MainActivity.kt <<'EOF'
+          package com.zeeshan.ai
+
+          import android.graphics.Color
+          import android.graphics.Typeface
+          import android.graphics.drawable.GradientDrawable
+          import android.os.Bundle
+          import android.os.Handler
+          import android.os.Looper
+          import android.view.Gravity
+          import android.view.View
+          import android.widget.*
+          import androidx.appcompat.app.AppCompatActivity
+
+          class MainActivity : AppCompatActivity() {
+
+              companion object {
+                  init {
+                      System.loadLibrary("z2ai")
+                  }
+              }
+
+              private external fun nativeGetAIResponse(query: String): String
+
+              private lateinit var chatContainer: LinearLayout
+              private lateinit var scrollView: ScrollView
+              private lateinit var inputMessage: EditText
+              private lateinit var sendBtn: Button
+              private val handler = Handler(Looper.getMainLooper())
+
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+
+                  val mainRoot = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      background = GradientDrawable(
+                          GradientDrawable.Orientation.TOP_BOTTOM,
+                          intArrayOf(Color.parseColor("#09090B"), Color.parseColor("#18181B"), Color.parseColor("#27272A"))
+                      )
+                      layoutParams = LinearLayout.LayoutParams(-1, -1)
+                  }
+
+                  // 3D Shadow Header / Top Bar
+                  val topBar = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                      background = GradientDrawable().apply {
+                          setColor(Color.parseColor("#18181B"))
+                          cornerRadius = 40f
+                          setStroke(3, Color.parseColor("#EC4899")) // Neon Pink Border
+                      }
+                      setPadding(40, 30, 40, 30)
+                      elevation = 32f
+                      layoutParams = LinearLayout.LayoutParams(-1, -2).apply {
+                          setMargins(24, 30, 24, 15)
+                      }
+                  }
+
+                  val headerInfoLayout = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
+                  }
+
+                  val titleTv = TextView(this).apply {
+                      text = "⚡ Zeeshan AI [3D Core]"
+                      textSize = 20f
+                      setTypeface(null, Typeface.BOLD)
+                      setTextColor(Color.parseColor("#F43F5E"))
+                  }
+
+                  val subtitleTv = TextView(this).apply {
+                      text = "🟢 Cloud Brain Linked & Active"
+                      textSize = 12f
+                      setTextColor(Color.parseColor("#38BDF8"))
+                  }
+
+                  headerInfoLayout.addView(titleTv)
+                  headerInfoLayout.addView(subtitleTv)
+
+                  val clearBtn = Button(this).apply {
+                      text = "🗑️"
+                      textSize = 14f
+                      background = GradientDrawable().apply {
+                          setColor(Color.parseColor("#27272A"))
+                          cornerRadius = 25f
+                          setStroke(2, Color.parseColor("#F43F5E"))
+                      }
+                      setTextColor(Color.WHITE)
+                      setOnClickListener {
+                          try {
+                              chatContainer.removeAllViews()
+                              addAIMessage("मेमोरी रीसेट! जीशान भाई, नया निर्देश दें।")
+                          } catch (e: Exception) {
+                              e.printStackTrace()
+                          }
+                      }
+                      layoutParams = LinearLayout.LayoutParams(100, 100)
+                  }
+
+                  topBar.addView(headerInfoLayout)
+                  topBar.addView(clearBtn)
+                  mainRoot.addView(topBar)
+
+                  scrollView = ScrollView(this).apply {
+                      layoutParams = LinearLayout.LayoutParams(-1, 0, 1f).apply {
+                          setMargins(20, 10, 20, 10)
+                      }
+                      isFillViewport = true
+                  }
+
+                  chatContainer = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setPadding(15, 15, 15, 15)
+                  }
+                  scrollView.addView(chatContainer)
+                  mainRoot.addView(scrollView)
+
+                  // 3D Input Container
+                  val inputLayout = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                      background = GradientDrawable().apply {
+                          setColor(Color.parseColor("#18181B"))
+                          cornerRadius = 50f
+                          setStroke(3, Color.parseColor("#8B5CF6")) // Neon Purple Border
+                      }
+                      setPadding(35, 12, 12, 12)
+                      elevation = 40f
+                      layoutParams = LinearLayout.LayoutParams(-1, -2).apply {
+                          setMargins(24, 15, 24, 35)
+                      }
+                  }
+
+                  inputMessage = EditText(this).apply {
+                      hint = "हिंदी में कुछ टाइप करें..."
+                      setHintTextColor(Color.parseColor("#71717A"))
+                      setTextColor(Color.WHITE)
+                      textSize = 16f
+                      setBackgroundColor(Color.TRANSPARENT)
+                      layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply {
+                          setMargins(10, 0, 15, 0)
+                      }
+                  }
+
+                  sendBtn = Button(this).apply {
+                      text = "🚀"
+                      textSize = 18f
+                      background = GradientDrawable(
+                          GradientDrawable.Orientation.LEFT_RIGHT,
+                          intArrayOf(Color.parseColor("#8B5CF6"), Color.parseColor("#EC4899"))
+                      ).apply {
+                          cornerRadius = 40f
+                      }
+                      setTextColor(Color.WHITE)
+                      setTypeface(null, Typeface.BOLD)
+                      setOnClickListener {
+                          val text = inputMessage.text.toString().trim()
+                          if (text.isNotEmpty()) {
+                              addUserMessage(text)
+                              inputMessage.setText("")
+                              triggerNativeAIResponse(text)
+                          }
+                      }
+                      layoutParams = LinearLayout.LayoutParams(130, 130)
+                  }
+
+                  inputLayout.addView(inputMessage)
+                  inputLayout.addView(sendBtn)
+                  mainRoot.addView(inputLayout)
+
+                  setContentView(mainRoot)
+
+                  addAIMessage("नमस्ते जीशान भाई! क्लाउड AI ब्रेन सफलतापूर्वक लोड हो चुका है।")
+              }
+
+              private fun addUserMessage(message: String) {
+                  try {
+                      val msgView = TextView(this).apply {
+                          text = "👤  $message"
+                          setTextColor(Color.WHITE)
+                          textSize = 15f
+                          setPadding(40, 28, 40, 28)
+                          background = GradientDrawable(
+                              GradientDrawable.Orientation.TL_BR,
+                              intArrayOf(Color.parseColor("#9333EA"), Color.parseColor("#4F46E5"))
+                          ).apply {
+                              cornerRadius = 35f
+                          }
+                          elevation = 12f
+                          layoutParams = LinearLayout.LayoutParams(-2, -2).apply {
+                              gravity = Gravity.END
+                              setMargins(120, 15, 15, 15)
+                          }
+                      }
+                      chatContainer.addView(msgView)
+                      scrollToBottom()
+                  } catch (e: Exception) {
+                      e.printStackTrace()
+                  }
+              }
+
+              private fun addAIMessage(message: String) {
+                  try {
+                      val msgView = TextView(this).apply {
+                          text = "🤖  $message"
+                          setTextColor(Color.parseColor("#F4F4F5"))
+                          textSize = 15f
+                          setPadding(40, 28, 40, 28)
+                          background = GradientDrawable(
+                              GradientDrawable.Orientation.TL_BR,
+                              intArrayOf(Color.parseColor("#27272A"), Color.parseColor("#18181B"))
+                          ).apply {
+                              cornerRadius = 35f
+                              setStroke(2, Color.parseColor("#EC4899"))
+                          }
+                          elevation = 16f
+                          layoutParams = LinearLayout.LayoutParams(-2, -2).apply {
+                              gravity = Gravity.START
+                              setMargins(15, 15, 120, 15)
+                          }
+                      }
+                      chatContainer.addView(msgView)
+                      scrollToBottom()
+                  } catch (e: Exception) {
+                      e.printStackTrace()
+                  }
+              }
+
+              private fun triggerNativeAIResponse(userQuery: String) {
+                  handler.postDelayed({
+                      try {
+                          val response = nativeGetAIResponse(userQuery)
+                          addAIMessage(response)
+                      } catch (e: Exception) {
+                          addAIMessage("C++ क्लाउड इंजन प्रोसेस करते समय त्रुटि आई है भाई!")
+                      }
+                  }, 300)
+              }
+
+              private fun scrollToBottom() {
+                  handler.post {
+                      try {
+                          scrollView.fullScroll(View.FOCUS_DOWN)
+                      } catch (e: Exception) {
+                          e.printStackTrace()
+                      }
+                  }
+              }
+          }
+          EOF
+
+      - name: 16. Compile and Build Signed APK with C++ NDK
+        run: |
+          echo "⚙️ Starting Gradle Build & NDK C++ Compilation..."
+          gradle assembleDebug
+
+      - name: 17. Upload APK Artifact for Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: Zeeshan-AI-Cpp-Powered-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+
