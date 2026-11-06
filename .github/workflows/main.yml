@@ -1,4 +1,4 @@
-name: Build Zeeshan AI C++ Powered APK
+name: Build Zeeshan AI 25-Layer Novelist APK
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Native C++ Android APK
+    name: Build Native C++ 25-Layer Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -40,10 +40,10 @@ jobs:
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/cpp
 
-      - name: 5. Download AI Brain & Run Enterprise Python Patcher
+      - name: 5. Download 25-Layer AI Brain & Run Enterprise Python Patcher
         run: |
           echo "=================================================="
-          echo "🌐 Downloading AI Brain & Running Python Patcher..."
+          echo "🌐 Downloading 25-Layer AI Brain & Running Python Patcher..."
           echo "=================================================="
           
           # स्वतंत्र AI-Brain रिपॉजिटरी से Raw लिंक डाउनलोड
@@ -123,8 +123,8 @@ jobs:
                   applicationId "com.zeeshan.ai"
                   minSdk 26
                   targetSdk 34
-                  versionCode 13
-                  versionName "13.0"
+                  versionCode 25
+                  versionName "25.0"
                   externalNativeBuild {
                       cmake {
                           cppFlags "-std=c++17 -O2"
@@ -159,7 +159,7 @@ jobs:
           cat > app/src/main/res/values/strings.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <string name="app_name">Zeeshan AI Ultimate</string>
+              <string name="app_name">Zeeshan AI 25-Layer</string>
           </resources>
           EOF
 
@@ -245,7 +245,7 @@ jobs:
           target_link_libraries(z2ai ${log-lib})
           EOF
 
-      - name: 15. Write 3D-Style Cyberpunk MainActivity.kt with Native C++ Bridge
+      - name: 15. Write 25-Layer Cyberpunk MainActivity.kt with Native C++ Bridge
         run: |
           cat > app/src/main/java/com/zeeshan/ai/MainActivity.kt <<'EOF'
           package com.zeeshan.ai
@@ -310,14 +310,14 @@ jobs:
                   }
 
                   val titleTv = TextView(this).apply {
-                      text = "⚡ Zeeshan AI [3D Core]"
-                      textSize = 20f
+                      text = "⚡ Zeeshan AI [25-Layer Novelist]"
+                      textSize = 19f
                       setTypeface(null, Typeface.BOLD)
                       setTextColor(Color.parseColor("#F43F5E"))
                   }
 
                   val subtitleTv = TextView(this).apply {
-                      text = "🟢 Cloud Brain Linked & Active"
+                      text = "🧠 2000-Word Token Engine Active"
                       textSize = 12f
                       setTextColor(Color.parseColor("#38BDF8"))
                   }
@@ -417,7 +417,7 @@ jobs:
 
                   setContentView(mainRoot)
 
-                  addAIMessage("नमस्ते जीशान भाई! क्लाउड AI ब्रेन सफलतापूर्वक लोड हो चुका है।")
+                  addAIMessage("नमस्ते जीशान भाई! 25 लेयर्स और 2000 शब्दों की क्षमता वाला उन्नत C++ AI ब्रेन पूरी तरह तैयार है।")
               }
 
               private fun addUserMessage(message: String) {
@@ -479,7 +479,7 @@ jobs:
                           val response = nativeGetAIResponse(userQuery)
                           addAIMessage(response)
                       } catch (e: Exception) {
-                          addAIMessage("C++ क्लाउड इंजन प्रोसेस करते समय त्रुटि आई है भाई!")
+                          addAIMessage("C++ इंजन प्रोसेस करते समय त्रुटि आई है भाई!")
                       }
                   }, 300)
               }
@@ -504,6 +504,6 @@ jobs:
       - name: 17. Upload APK Artifact for Download
         uses: actions/upload-artifact@v4
         with:
-          name: Zeeshan-AI-Cpp-Powered-APK
+          name: Zeeshan-AI-25-Layer-Novelist-APK
           path: app/build/outputs/apk/debug/app-debug.apk
 
