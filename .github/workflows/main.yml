@@ -40,20 +40,23 @@ jobs:
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/cpp
 
-      - name: 5. Download AI Brain Remotely from External AI-Brain Cloud Repo
+      - name: 5. Download & Auto-Patch External AI Brain (Zero Touch to AI-Brain Repo)
         run: |
           echo "=================================================="
-          echo "🌐 Fetching External AI Brain via Cloud URL..."
+          echo "🌐 Downloading AI Brain & Applying Auto-Patch..."
           echo "=================================================="
           
-          # आपकी स्वतंत्र AI-Brain रिपॉजिटरी का डायरेक्ट Raw लिंक
+          # स्वतंत्र AI-Brain रिपॉजिटरी से Raw लिंक डाउनलोड
           AI_BRAIN_URL="https://raw.githubusercontent.com/zeeshanhusain717-collab/AI-Brain/main/brain.cpp"
-          
           curl -sL -o app/src/main/cpp/brain.cpp "$AI_BRAIN_URL"
           
-          echo "✅ External AI Brain successfully downloaded and injected!"
+          # यहाँ ऑटो-पैचिंग हो रही है ताकि AI-Brain को बिना छेड़े कंपाइलर की एरर हमेशा के लिए खत्म हो जाए
+          echo "🔧 Applying NDK compatibility patch dynamically..."
+          sed -i 's/std::advance(it1, dist1(rng));/std::advance(it1, static_cast<long>(dist1(rng)));/g' app/src/main/cpp/brain.cpp
+          sed -i 's/std::advance(it2, dist2(rng));/std::advance(it2, static_cast<long>(dist2(rng)));/g' app/src/main/cpp/brain.cpp
+          
+          echo "✅ AI Brain successfully downloaded, patched, and ready!"
           ls -lh app/src/main/cpp/brain.cpp
-          head -n 5 app/src/main/cpp/brain.cpp
 
       - name: 6. Write gradle.properties
         run: |
@@ -265,14 +268,13 @@ jobs:
                       layoutParams = LinearLayout.LayoutParams(-1, -1)
                   }
 
-                  // 3D Shadow Header / Top Bar
                   val topBar = LinearLayout(this).apply {
                       orientation = LinearLayout.HORIZONTAL
                       gravity = Gravity.CENTER_VERTICAL
                       background = GradientDrawable().apply {
                           setColor(Color.parseColor("#18181B"))
                           cornerRadius = 40f
-                          setStroke(3, Color.parseColor("#EC4899")) // Neon Pink Border
+                          setStroke(3, Color.parseColor("#EC4899"))
                       }
                       setPadding(40, 30, 40, 30)
                       elevation = 32f
@@ -340,14 +342,13 @@ jobs:
                   scrollView.addView(chatContainer)
                   mainRoot.addView(scrollView)
 
-                  // 3D Input Container
                   val inputLayout = LinearLayout(this).apply {
                       orientation = LinearLayout.HORIZONTAL
                       gravity = Gravity.CENTER_VERTICAL
                       background = GradientDrawable().apply {
                           setColor(Color.parseColor("#18181B"))
                           cornerRadius = 50f
-                          setStroke(3, Color.parseColor("#8B5CF6")) // Neon Purple Border
+                          setStroke(3, Color.parseColor("#8B5CF6"))
                       }
                       setPadding(35, 12, 12, 12)
                       elevation = 40f
@@ -484,4 +485,3 @@ jobs:
         with:
           name: Zeeshan-AI-Cpp-Powered-APK
           path: app/build/outputs/apk/debug/app-debug.apk
-
