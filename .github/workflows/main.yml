@@ -1,4 +1,4 @@
-name: Build Zeeshan AI 25-Layer Novelist APK
+name: Build Zeeshan AI 5-Domain Lightweight APK
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Native C++ 25-Layer Android APK
+    name: Build Native C++ 5-Domain Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -40,42 +40,15 @@ jobs:
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/cpp
 
-      - name: 5. Download 25-Layer AI Brain & Run Enterprise Python Patcher
+      - name: 5. Download 5-Domain AI Brain from Zeeshan's Link
         run: |
           echo "=================================================="
-          echo "🌐 Downloading 25-Layer AI Brain & Running Python Patcher..."
+          echo "🌐 Downloading Zeeshan's 5-Domain AI Brain..."
           echo "=================================================="
           
-          # स्वतंत्र AI-Brain रिपॉजिटरी से Raw लिंक डाउनलोड
-          AI_BRAIN_URL="https://raw.githubusercontent.com/zeeshanhusain717-collab/AI-Brain/main/brain.cpp"
+          # आपके द्वारा दी गई सटीक गिटहब रॉ लिंक से डाउनलोड
+          AI_BRAIN_URL="https://github.com/zeeshanhusain717-collab/AI-Brain/raw/refs/heads/main/brain.cpp"
           curl -sL -o app/src/main/cpp/brain.cpp "$AI_BRAIN_URL"
-          
-          # यहाँ एडवांस्ड पाइथन पैचर स्क्रिप्ट के जरिए C++ कंपाइलर की सुरक्षा और टाइप-सेफ्टी सुनिश्चित की जा रही है
-          python3 - << 'EOF'
-          import re
-
-          filepath = "app/src/main/cpp/brain.cpp"
-          with open(filepath, "r", encoding="utf-8") as f:
-              code = f.read()
-
-          # यदि std::advance में टाइप कास्टिंग छूटी हो, तो पाइथन उसे सुरक्षित रूप से ठीक कर देगा
-          code = re.sub(
-              r'std::advance\s*\(\s*it1\s*,\s*std::uniform_int_distribution<[^>]+>\s*\(([^)]+)\)\s*\)\s*;',
-              r'std::uniform_int_distribution<std::size_t> dist1(\1);\n        std::advance(it1, static_cast<long>(dist1(rng)));',
-              code
-          )
-
-          code = re.sub(
-              r'std::advance\s*\(\s*it2\s*,\s*std::uniform_int_distribution<[^>]+>\s*\(([^)]+)\)\s*\)\s*;',
-              r'std::uniform_int_distribution<std::size_t> dist2(\1);\n        std::advance(it2, static_cast<long>(dist2(rng)));',
-              code
-          )
-
-          with open(filepath, "w", encoding="utf-8") as f:
-              f.write(code)
-
-          print("✅ Enterprise Python Patcher successfully verified and applied to brain.cpp!")
-          EOF
           
           ls -lh app/src/main/cpp/brain.cpp
 
@@ -123,8 +96,8 @@ jobs:
                   applicationId "com.zeeshan.ai"
                   minSdk 26
                   targetSdk 34
-                  versionCode 25
-                  versionName "25.0"
+                  versionCode 30
+                  versionName "3.0"
                   externalNativeBuild {
                       cmake {
                           cppFlags "-std=c++17 -O2"
@@ -159,11 +132,11 @@ jobs:
           cat > app/src/main/res/values/strings.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <string name="app_name">Zeeshan AI 25-Layer</string>
+              <string name="app_name">Zeeshan AI 5-Domain</string>
           </resources>
           EOF
 
-      - name: 11. Write Red App Icon Vector Drawable with +2 Text
+      - name: 11. Write Red App Icon Vector Drawable with +5 Text
         run: |
           cat > app/src/main/res/drawable/ic_app_icon.xml <<'EOF'
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -208,29 +181,28 @@ jobs:
           </manifest>
           EOF
 
-      - name: 13. Write JNI Native Bridge (`native-lib.cpp`)
+      - name: 13. Write JNI Native Bridge (`native-lib.cpp`) - Fixed for Singleton Brain
         run: |
           cat > app/src/main/cpp/native-lib.cpp <<'EOF'
           #include <jni.h>
           #include <string>
-          #include <random>
-          #include <chrono>
-          #include <memory>
           #include "brain.cpp"
-
-          static std::unique_ptr<z2ai::Brain> g_brain;
 
           extern "C" JNIEXPORT jstring JNICALL
           Java_com_zeeshan_ai_MainActivity_nativeGetAIResponse(JNIEnv* env, jobject /* this */, jstring query_) {
               const char* queryChars = env->GetStringUTFChars(query_, nullptr);
-              std::string query(queryChars);
-              env->ReleaseStringUTFChars(query_, queryChars);
-
-              if (!g_brain) {
-                  g_brain = std::make_unique<z2ai::Brain>();
+              std::string query(queryChars ? queryChars : "");
+              if (queryChars) {
+                  env->ReleaseStringUTFChars(query_, queryChars);
               }
 
-              std::string response = g_brain->process(query);
+              std::string response;
+              try {
+                  response = z2ai::getBrain().process(query);
+              } catch (...) {
+                  response = "जीशान भाई, मोबाइल की रैम पर हल्का भार आया था, कृपया दोबारा निर्देश दें।";
+              }
+
               return env->NewStringUTF(response.c_str());
           }
           EOF
@@ -245,7 +217,7 @@ jobs:
           target_link_libraries(z2ai ${log-lib})
           EOF
 
-      - name: 15. Write 25-Layer Cyberpunk MainActivity.kt with Native C++ Bridge
+      - name: 15. Write Cyberpunk MainActivity.kt with Native C++ Bridge
         run: |
           cat > app/src/main/java/com/zeeshan/ai/MainActivity.kt <<'EOF'
           package com.zeeshan.ai
@@ -310,14 +282,14 @@ jobs:
                   }
 
                   val titleTv = TextView(this).apply {
-                      text = "⚡ Zeeshan AI [25-Layer Novelist]"
-                      textSize = 19f
+                      text = "⚡ Zeeshan AI [5-Domain Lightweight]"
+                      textSize = 18f
                       setTypeface(null, Typeface.BOLD)
                       setTextColor(Color.parseColor("#F43F5E"))
                   }
 
                   val subtitleTv = TextView(this).apply {
-                      text = "🧠 2000-Word Token Engine Active"
+                      text = "🧠 Offline Hindi Engine (Galaxy A12 Optimized)"
                       textSize = 12f
                       setTextColor(Color.parseColor("#38BDF8"))
                   }
@@ -417,7 +389,7 @@ jobs:
 
                   setContentView(mainRoot)
 
-                  addAIMessage("नमस्ते जीशान भाई! 25 लेयर्स और 2000 शब्दों की क्षमता वाला उन्नत C++ AI ब्रेन पूरी तरह तैयार है।")
+                  addAIMessage("नमस्ते जीशान भाई! 5-डोमेन और क्रैश-फ्री सिंगलटन C++ AI ब्रेन पूरी तरह तैयार है।")
               }
 
               private fun addUserMessage(message: String) {
@@ -504,6 +476,6 @@ jobs:
       - name: 17. Upload APK Artifact for Download
         uses: actions/upload-artifact@v4
         with:
-          name: Zeeshan-AI-25-Layer-Novelist-APK
+          name: Zeeshan-AI-5-Domain-Lightweight-APK
           path: app/build/outputs/apk/debug/app-debug.apk
 
