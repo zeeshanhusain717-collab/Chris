@@ -46,7 +46,6 @@ jobs:
           echo "🌐 Downloading Zeeshan's 5-Domain AI Brain..."
           echo "=================================================="
           
-          # आपके द्वारा दी गई सटीक गिटहब रॉ लिंक से डाउनलोड
           AI_BRAIN_URL="https://github.com/zeeshanhusain717-collab/AI-Brain/raw/refs/heads/main/brain.cpp"
           curl -sL -o app/src/main/cpp/brain.cpp "$AI_BRAIN_URL"
           
@@ -96,8 +95,8 @@ jobs:
                   applicationId "com.zeeshan.ai"
                   minSdk 26
                   targetSdk 34
-                  versionCode 30
-                  versionName "3.0"
+                  versionCode 35
+                  versionName "3.5"
                   externalNativeBuild {
                       cmake {
                           cppFlags "-std=c++17 -O2"
@@ -136,7 +135,7 @@ jobs:
           </resources>
           EOF
 
-      - name: 11. Write Red App Icon Vector Drawable with +5 Text
+      - name: 11. Write Red App Icon Vector Drawable
         run: |
           cat > app/src/main/res/drawable/ic_app_icon.xml <<'EOF'
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -181,43 +180,17 @@ jobs:
           </manifest>
           EOF
 
-      - name: 13. Write JNI Native Bridge (`native-lib.cpp`) - Fixed for Singleton Brain
-        run: |
-          cat > app/src/main/cpp/native-lib.cpp <<'EOF'
-          #include <jni.h>
-          #include <string>
-          #include "brain.cpp"
-
-          extern "C" JNIEXPORT jstring JNICALL
-          Java_com_zeeshan_ai_MainActivity_nativeGetAIResponse(JNIEnv* env, jobject /* this */, jstring query_) {
-              const char* queryChars = env->GetStringUTFChars(query_, nullptr);
-              std::string query(queryChars ? queryChars : "");
-              if (queryChars) {
-                  env->ReleaseStringUTFChars(query_, queryChars);
-              }
-
-              std::string response;
-              try {
-                  response = z2ai::getBrain().process(query);
-              } catch (...) {
-                  response = "जीशान भाई, मोबाइल की रैम पर हल्का भार आया था, कृपया दोबारा निर्देश दें।";
-              }
-
-              return env->NewStringUTF(response.c_str());
-          }
-          EOF
-
-      - name: 14. Write CMakeLists.txt for NDK Compilation
+      - name: 13. Write CMakeLists.txt to compile brain.cpp directly
         run: |
           cat > app/src/main/cpp/CMakeLists.txt <<'EOF'
           cmake_minimum_required(VERSION 3.22.1)
           project("z2ai")
-          add_library(z2ai SHARED native-lib.cpp)
+          add_library(z2ai SHARED brain.cpp)
           find_library(log-lib log)
           target_link_libraries(z2ai ${log-lib})
           EOF
 
-      - name: 15. Write Cyberpunk MainActivity.kt with Native C++ Bridge
+      - name: 14. Write Cyberpunk MainActivity.kt with Native C++ Bridge
         run: |
           cat > app/src/main/java/com/zeeshan/ai/MainActivity.kt <<'EOF'
           package com.zeeshan.ai
@@ -389,7 +362,7 @@ jobs:
 
                   setContentView(mainRoot)
 
-                  addAIMessage("नमस्ते जीशान भाई! 5-डोमेन और क्रैश-फ्री सिंगलटन C++ AI ब्रेन पूरी तरह तैयार है।")
+                  addAIMessage("नमस्ते जीशान भाई! 5-डोमेन और क्रैश-फ्री C++ AI ब्रेन पूरी तरह तैयार है।")
               }
 
               private fun addUserMessage(message: String) {
@@ -468,12 +441,12 @@ jobs:
           }
           EOF
 
-      - name: 16. Compile and Build Signed APK with C++ NDK
+      - name: 15. Compile and Build Signed APK with C++ NDK
         run: |
           echo "⚙️ Starting Gradle Build & NDK C++ Compilation..."
           gradle assembleDebug
 
-      - name: 17. Upload APK Artifact for Download
+      - name: 16. Upload APK Artifact for Download
         uses: actions/upload-artifact@v4
         with:
           name: Zeeshan-AI-5-Domain-Lightweight-APK
