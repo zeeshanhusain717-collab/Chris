@@ -1,4 +1,4 @@
-name: Build Zeeshan AI 5-Domain Lightweight APK
+name: Build Zeeshan AI Voice & Permissions APK
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Native C++ 5-Domain Android APK
+    name: Build Native C++ Voice-Enabled Android APK with Permissions
     runs-on: ubuntu-latest
 
     steps:
@@ -40,13 +40,13 @@ jobs:
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/cpp
 
-      - name: 5. Download 5-Domain AI Brain from Zeeshan's Link
+      - name: 5. Download AI Brain from Zeeshan's Chris Repository
         run: |
           echo "=================================================="
-          echo "🌐 Downloading Zeeshan's 5-Domain AI Brain..."
+          echo "🌐 Downloading Zeeshan's AI Brain from Chris repo..."
           echo "=================================================="
           
-          AI_BRAIN_URL="https://github.com/zeeshanhusain717-collab/AI-Brain/raw/refs/heads/main/brain.cpp"
+          AI_BRAIN_URL="https://github.com/zeeshanhusain717-collab/Chris/raw/refs/heads/main/brain.cpp"
           curl -sL -o app/src/main/cpp/brain.cpp "$AI_BRAIN_URL"
           
           ls -lh app/src/main/cpp/brain.cpp
@@ -95,8 +95,8 @@ jobs:
                   applicationId "com.zeeshan.ai"
                   minSdk 26
                   targetSdk 34
-                  versionCode 35
-                  versionName "3.5"
+                  versionCode 38
+                  versionName "3.8"
                   externalNativeBuild {
                       cmake {
                           cppFlags "-std=c++17 -O2"
@@ -131,7 +131,7 @@ jobs:
           cat > app/src/main/res/values/strings.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <string name="app_name">Zeeshan AI 5-Domain</string>
+              <string name="app_name">Zeeshan AI Voice Engine</string>
           </resources>
           EOF
 
@@ -155,11 +155,14 @@ jobs:
           </vector>
           EOF
 
-      - name: 12. Write Android Manifest File
+      - name: 12. Write Android Manifest File with Permissions
         run: |
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />
+              <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+              
               <application
                   android:allowBackup="false"
                   android:icon="@drawable/ic_app_icon"
@@ -190,28 +193,35 @@ jobs:
           target_link_libraries(z2ai ${log-lib})
           EOF
 
-      - name: 14. Write Cyberpunk MainActivity.kt with Native C++ Bridge
+      - name: 14. Write Cyberpunk MainActivity.kt with Native C++, Voice TTS & Runtime Permissions
         run: |
           cat > app/src/main/java/com/zeeshan/ai/MainActivity.kt <<'EOF'
           package com.zeeshan.ai
 
+          import android.Manifest
+          import android.content.pm.PackageManager
           import android.graphics.Color
           import android.graphics.Typeface
           import android.graphics.drawable.GradientDrawable
           import android.os.Bundle
           import android.os.Handler
           import android.os.Looper
+          import android.speech.tts.TextToSpeech
           import android.view.Gravity
           import android.view.View
           import android.widget.*
           import androidx.appcompat.app.AppCompatActivity
+          import androidx.core.app.ActivityCompat
+          import androidx.core.content.ContextCompat
+          import java.util.*
 
-          class MainActivity : AppCompatActivity() {
+          class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
               companion object {
                   init {
                       System.loadLibrary("z2ai")
                   }
+                  private const val PERMISSION_REQUEST_CODE = 200
               }
 
               private external fun nativeGetAIResponse(query: String): String
@@ -220,10 +230,17 @@ jobs:
               private lateinit var scrollView: ScrollView
               private lateinit var inputMessage: EditText
               private lateinit var sendBtn: Button
+              private lateinit var tts: TextToSpeech
+              private var isTtsReady = false
               private val handler = Handler(Looper.getMainLooper())
 
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
+
+                  // Request Runtime Permissions on Startup (Microphone/Audio)
+                  checkAndRequestPermissions()
+
+                  tts = TextToSpeech(this, this)
 
                   val mainRoot = LinearLayout(this).apply {
                       orientation = LinearLayout.VERTICAL
@@ -255,14 +272,14 @@ jobs:
                   }
 
                   val titleTv = TextView(this).apply {
-                      text = "⚡ Zeeshan AI [5-Domain Lightweight]"
-                      textSize = 18f
+                      text = "⚡ Zeeshan AI [Voice + Permissions]"
+                      textSize = 17f
                       setTypeface(null, Typeface.BOLD)
                       setTextColor(Color.parseColor("#F43F5E"))
                   }
 
                   val subtitleTv = TextView(this).apply {
-                      text = "🧠 Offline Hindi Engine (Galaxy A12 Optimized)"
+                      text = "🎙️ 100% Offline C++ Engine"
                       textSize = 12f
                       setTextColor(Color.parseColor("#38BDF8"))
                   }
@@ -282,7 +299,7 @@ jobs:
                       setOnClickListener {
                           try {
                               chatContainer.removeAllViews()
-                              addAIMessage("मेमोरी रीसेट! जीशान भाई, नया निर्देश दें।")
+                              addAIMessage("मेमोरी रीसेट! जीशान भाई, नया सवाल पूछें।")
                           } catch (e: Exception) {
                               e.printStackTrace()
                           }
@@ -324,7 +341,7 @@ jobs:
                   }
 
                   inputMessage = EditText(this).apply {
-                      hint = "हिंदी में कुछ टाइप करें..."
+                      hint = "हिंदी में टाइप करें..."
                       setHintTextColor(Color.parseColor("#71717A"))
                       setTextColor(Color.WHITE)
                       textSize = 16f
@@ -362,7 +379,35 @@ jobs:
 
                   setContentView(mainRoot)
 
-                  addAIMessage("नमस्ते जीशान भाई! 5-डोमेन और क्रैश-फ्री C++ AI ब्रेन पूरी तरह तैयार है।")
+                  addAIMessage("नमस्ते जीशान भाई! वॉइस, परमिशन्स और C++ AI ब्रेन पूरी तरह तैयार हैं।")
+              }
+
+              private fun checkAndRequestPermissions() {
+                  val micPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                  if (micPermission != PackageManager.PERMISSION_GRANTED) {
+                      ActivityCompat.requestPermissions(
+                          this,
+                          arrayOf(Manifest.permission.RECORD_AUDIO),
+                          PERMISSION_REQUEST_CODE
+                      )
+                  }
+              }
+
+              override fun onInit(status: Int) {
+                  if (status == TextToSpeech.SUCCESS) {
+                      val result = tts.setLanguage(Locale("hi", "IN"))
+                      if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                          tts.setLanguage(Locale.US)
+                      } else {
+                          isTtsReady = true
+                      }
+                  }
+              }
+
+              private fun speakOut(text: String) {
+                  if (isTtsReady && text.isNotEmpty()) {
+                      tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+                  }
               }
 
               private fun addUserMessage(message: String) {
@@ -391,7 +436,7 @@ jobs:
                   }
               }
 
-              private fun addAIMessage(message: String) {
+              private fun addAIMessage(message: String, speak: Boolean = true) {
                   try {
                       val msgView = TextView(this).apply {
                           text = "🤖  $message"
@@ -413,6 +458,9 @@ jobs:
                       }
                       chatContainer.addView(msgView)
                       scrollToBottom()
+                      if (speak) {
+                          speakOut(message)
+                      }
                   } catch (e: Exception) {
                       e.printStackTrace()
                   }
@@ -422,9 +470,9 @@ jobs:
                   handler.postDelayed({
                       try {
                           val response = nativeGetAIResponse(userQuery)
-                          addAIMessage(response)
+                          addAIMessage(response, true)
                       } catch (e: Exception) {
-                          addAIMessage("C++ इंजन प्रोसेस करते समय त्रुटि आई है भाई!")
+                          addAIMessage("C++ इंजन प्रोसेस करते समय त्रुटि आई है भाई!", true)
                       }
                   }, 300)
               }
@@ -438,10 +486,18 @@ jobs:
                       }
                   }
               }
+
+              override fun onDestroy() {
+                  if (::tts.isInitialized) {
+                      tts.stop()
+                      tts.shutdown()
+                  }
+                  super.onDestroy()
+              }
           }
           EOF
 
-      - name: 15. Compile and Build Signed APK with C++ NDK
+      - name: 15. Compile and Build Signed APK with C++ NDK, Voice & Permissions
         run: |
           echo "⚙️ Starting Gradle Build & NDK C++ Compilation..."
           gradle assembleDebug
@@ -449,6 +505,5 @@ jobs:
       - name: 16. Upload APK Artifact for Download
         uses: actions/upload-artifact@v4
         with:
-          name: Zeeshan-AI-5-Domain-Lightweight-APK
+          name: Zeeshan-AI-Voice-Permissions-APK
           path: app/build/outputs/apk/debug/app-debug.apk
-
